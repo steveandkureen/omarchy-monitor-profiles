@@ -59,6 +59,18 @@ Applying a profile writes `~/.config/hypr/hypr_screen.lua` as `hl.monitor(...)`
 calls (the format Hyprland's Lua config actually understands — see
 "Applying a profile", below) and runs `hyprctl reload`.
 
+### Bar icon
+
+The plugin also adds a bar icon (▦) — a faster, mouse-or-keyboard way to
+switch profiles without opening the full panel, styled after Omarchy's own
+first-party bar widgets (Display/`SUPER+CTRL+D`, Bluetooth): click it, or
+give it keyboard focus and use `j`/`k`/arrows to move, Enter or click to
+apply, `Esc` to close, `Tab` to jump to the next bar widget's dropdown. It
+shows the currently active profile at the top and a checkmark next to it
+in the list. This doesn't replace the full switcher/editor above — it's
+only for switching between profiles you've already saved; creating and
+editing them still happens in the full panel.
+
 ## Keyboard-only editing
 
 Everything in the editor works without a mouse, in three vim-style modes
@@ -207,12 +219,13 @@ reload with `omarchy-restart-shell`.
 
 ## Files
 
-- `manifest.json` — plugin manifest (`kind: panel`, standalone/keybind-summoned)
-- `Panel.qml` — entry point: layer-shell overlay, mode switch, dismiss
-- `SwitcherView.qml` — the quick-switch list
+- `manifest.json` — plugin manifest (`kind: panel` + `kind: bar-widget`)
+- `Panel.qml` — the full switcher/editor entry point: layer-shell overlay, mode switch, dismiss
+- `SwitcherView.qml` — the quick-switch list (inside Panel.qml)
 - `EditorView.qml` — the visual editor (sidebar + canvas + inspector)
 - `MonitorRect.qml`, `InspectorField.qml`, `ActionButton.qml`, `ModeTab.qml` — small shared components
 - `SetupBanner.qml` — first-run "hyprland.lua isn't wired up yet" prompt
+- `BarWidget.qml` — the bar-icon quick-switcher (see "Bar icon", below)
 - `Model.js` — profile parsing/serialization, Lua translation, live-monitor mapping
 - `test/model-security.test.js` — adversarial tests for profile-name path traversal and Lua-injection escaping (`node test/model-security.test.js`)
 

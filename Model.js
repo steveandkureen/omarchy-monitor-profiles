@@ -186,6 +186,16 @@ function profileToLua(monitors, profileName) {
   return lines.join("\n") + "\n"
 }
 
+// The reverse of the comment profileToLua writes -- used by the bar widget
+// to show which profile is currently active without keeping its own
+// separate state file. Empty string (not null) when hypr_screen.lua doesn't
+// exist yet or wasn't written by this plugin, so callers can treat "no
+// active profile" and "couldn't read the file" the same way.
+function activeProfileNameFromLua(text) {
+  var m = String(text || "").match(/^-- Active profile: (.*)$/m)
+  return m ? m[1] : ""
+}
+
 // ---- live `hyprctl monitors -j` -> the same monitor shape ----------------
 
 function monitorFromHyprctlJson(j) {
