@@ -61,6 +61,8 @@ calls (the format Hyprland's Lua config actually understands — see
 
 ### Optional: take over the Display bar widget
 
+![The Display bar widget after taking it over: the same bar icon and brightness/text-size/scale controls, with a MONITOR PROFILES list (MacDev, Normal — active and checked, Single) and an Edit Profiles… row in place of the original per-display list](screenshots/display-takeover.png)
+
 A second, separate plugin — `dev.shantzware.monitor-profiles-display`,
 bundled in this same repo under `display-takeover/` — can take over
 Omarchy's first-party Display bar widget (`SUPER+CTRL+D`) entirely: same
