@@ -133,7 +133,13 @@ Panel {
     if (brightnessAvailable) list.push("brightness")
     list.push("textsize")
     list.push("scale")
-    if (profileNames.length > 0) list.push("profiles")
+    // Always present, even with zero saved profiles: the trailing "Edit
+    // Profiles..." row (sectionCount("profiles") = profileNames.length + 1)
+    // still needs somewhere to land, and it's also where onOpenedChanged
+    // defaults the cursor to -- excluding the section here whenever
+    // profileNames is momentarily empty would make clampCursor() bounce
+    // that default back to brightness/scale before the list even loads.
+    list.push("profiles")
     return list
   }
 
@@ -424,13 +430,12 @@ Panel {
   onOpenedChanged: {
     if (opened) {
       refresh()
-      if (brightnessAvailable) {
-        focusSection = "brightness"
-        selectedIndex = -1
-      } else {
-        focusSection = "scale"
-        selectedIndex = 0
-      }
+      // Land on the profiles list rather than Display's own default
+      // (brightness, or scale when there's no backlight) -- this plugin's
+      // whole point is quick profile switching, so that's what j/k should
+      // reach first, not a few sections down.
+      focusSection = "profiles"
+      selectedIndex = 0
       cursorActive = false
     }
   }
