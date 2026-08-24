@@ -133,7 +133,13 @@ Panel {
     if (brightnessAvailable) list.push("brightness")
     list.push("textsize")
     list.push("scale")
-    if (profileNames.length > 0) list.push("profiles")
+    // Always present, even with zero saved profiles: the trailing "Edit
+    // Profiles..." row (sectionCount("profiles") = profileNames.length + 1)
+    // still needs somewhere to land, and it's also where onOpenedChanged
+    // defaults the cursor to -- excluding the section here whenever
+    // profileNames is momentarily empty would make clampCursor() bounce
+    // that default back to brightness/scale before the list even loads.
+    list.push("profiles")
     return list
   }
 
@@ -421,23 +427,40 @@ Panel {
   // KeyboardPanel primes focus at open-time, so SUPER-bound IPC summons land
   // with j/k ready to navigate. Keep a default landing point, but don't paint
   // the cursor until hover or the first navigation key.
+  // Pre-selects the active profile's row, falling back to the first one
+  // (e.g. before profileNames/activeProfileName have loaded, or if
+  // whatever was active got renamed/deleted from under it). Guarded by
+  // cursorActive so it only sets the *starting* point -- once the user
+  // has actually pressed a key, profileNames/activeProfileName updating
+  // out from under an in-progress selection (a background refresh, or
+  // this plugin's own apply landing) must not yank the cursor elsewhere.
+  function syncSelectedIndexToActiveProfile() {
+    if (cursorActive) return
+    var idx = profileNames.indexOf(activeProfileName)
+    selectedIndex = idx >= 0 ? idx : 0
+  }
+
   onOpenedChanged: {
     if (opened) {
       refresh()
-      if (brightnessAvailable) {
-        focusSection = "brightness"
-        selectedIndex = -1
-      } else {
-        focusSection = "scale"
-        selectedIndex = 0
-      }
+      // Land on the profiles list rather than Display's own default
+      // (brightness, or scale when there's no backlight) -- this plugin's
+      // whole point is quick profile switching, so that's what j/k should
+      // reach first, not a few sections down.
+      focusSection = "profiles"
       cursorActive = false
+      syncSelectedIndexToActiveProfile()
     }
   }
 
+  onActiveProfileNameChanged: syncSelectedIndexToActiveProfile()
+
   onBrightnessAvailableChanged: clampCursor()
   onDisplaysChanged: clampCursor()
-  onProfileNamesChanged: clampCursor()
+  onProfileNamesChanged: {
+    clampCursor()
+    syncSelectedIndexToActiveProfile()
+  }
   onScaleValuesChanged: clampCursor()
   onVisibleSectionsChanged: clampCursor()
 
