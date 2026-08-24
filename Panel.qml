@@ -57,12 +57,24 @@ Item {
   // who wants one to bind by hand, per the README.
   property bool menuEntryChecked: false
   property bool menuEntryReady: false
+  // Whether the separate dev.shantzware.monitor-profiles-display plugin is
+  // installed and enabled — it's what actually takes over Omarchy's Display
+  // bar widget (SUPER+CTRL+D); this plugin alone can't (see
+  // display-takeover/README.md for why it has to be a second plugin id).
+  // Entirely optional/opt-in, unlike the config wiring above: plenty of
+  // people are happy with Omarchy's own Display widget as-is.
+  readonly property string displayTakeoverPluginId: "dev.shantzware.monitor-profiles-display"
+  readonly property string displayTakeoverPluginsDir: root.home + "/.config/omarchy/plugins"
+  readonly property string displayTakeoverSourceDir: root.displayTakeoverPluginsDir + "/" + root.pluginId + "/display-takeover"
+  readonly property string displayTakeoverTargetDir: root.displayTakeoverPluginsDir + "/" + root.displayTakeoverPluginId
+  property bool displayTakeoverChecked: false
+  property bool displayTakeoverReady: false
   // Sticky for the life of this shell process once set, not just this
   // open/close cycle — otherwise the switcher keybind would re-nag on
   // every single press until the user gets around to fixing it.
   property bool setupDismissed: false
-  readonly property bool showSetupBanner: configChecked && menuEntryChecked &&
-    (!configReady || !menuEntryReady) && !setupDismissed
+  readonly property bool showSetupBanner: configChecked && menuEntryChecked && displayTakeoverChecked &&
+    (!configReady || !menuEntryReady || !displayTakeoverReady) && !setupDismissed
 
   function open(payloadJson) {
     var payload = {}
@@ -72,6 +84,7 @@ Item {
     if (root.mode === "switcher") refreshSwitcherProfiles()
     checkConfig()
     checkMenuEntry()
+    checkDisplayTakeover()
     ensureProfilesSeeded()
     root.opened = true
     Qt.callLater(root.focusActiveView)
@@ -153,6 +166,16 @@ Item {
   function wireUpMenuEntry() {
     menuEntryFile.path = root.omarchyMenuExtensionsPath
     menuEntryFile.reload()
+  }
+
+  function checkDisplayTakeover() {
+    displayTakeoverCheckProc.running = false
+    displayTakeoverCheckProc.running = true
+  }
+
+  function wireUpDisplayTakeover() {
+    displayTakeoverWireUpProc.running = false
+    displayTakeoverWireUpProc.running = true
   }
 
   // Keyboard nav (SwitcherView's arrow keys/Enter) only fires while that
@@ -339,6 +362,45 @@ Item {
     onExited: root.checkMenuEntry()
   }
 
+  Process {
+    id: displayTakeoverCheckProc
+    command: ["bash", "-lc", "[ -f \"" + root.displayTakeoverTargetDir + "/manifest.json\" ] && echo yes || echo no"]
+    stdout: StdioCollector {
+      waitForEnd: true
+      onStreamFinished: {
+        root.displayTakeoverReady = String(text || "").trim() === "yes"
+        root.displayTakeoverChecked = true
+      }
+    }
+  }
+
+  // Copies display-takeover/ (bundled in this plugin's own repo, a
+  // complete second manifest+QML -- see display-takeover/README.md) into
+  // its own installed plugin directory, then enables it. Can't just enable
+  // this plugin's own bar-widget kind instead: Omarchy's shell explicitly
+  // routes any toggle/summon/hide for a plugin that's *also* kind:"panel"
+  // to the panel, never a bar widget (shell.qml's isBarWidgetPanelPlugin
+  // -- "let that path handle them"), so SUPER+CTRL+D would keep opening
+  // the full editor instead of the Display-style dropdown. Confirmed the
+  // hard way; being a genuinely separate plugin id is what makes the
+  // routing work. The discovery poll after rescanning mirrors what
+  // `omarchy plugin clone` itself does -- rescan is async, so enabling
+  // immediately after can race a plugin that isn't registered yet.
+  Process {
+    id: displayTakeoverWireUpProc
+    command: ["bash", "-lc",
+      "set -e; " +
+      "mkdir -p " + JSON.stringify(root.displayTakeoverTargetDir) + "; " +
+      "cp -a " + JSON.stringify(root.displayTakeoverSourceDir + "/.") + " " + JSON.stringify(root.displayTakeoverTargetDir + "/") + "; " +
+      "omarchy-shell shell rescanPlugins >/dev/null; " +
+      "for i in $(seq 1 40); do " +
+      "  omarchy-plugin-list --json 2>/dev/null | jq -e --arg id " + JSON.stringify(root.displayTakeoverPluginId) + " 'any(.[]; .id == $id)' >/dev/null 2>&1 && break; " +
+      "  sleep 0.05; " +
+      "done; " +
+      "omarchy plugin enable " + JSON.stringify(root.displayTakeoverPluginId)]
+    onExited: root.checkDisplayTakeover()
+  }
+
   PanelWindow {
     visible: root.opened
     anchors { top: true; bottom: true; left: true; right: true }
@@ -442,8 +504,10 @@ Item {
                 visible: root.showSetupBanner
                 configReady: root.configReady
                 menuEntryReady: root.menuEntryReady
+                displayTakeoverReady: root.displayTakeoverReady
                 onWireUpConfigRequested: root.wireUpConfig()
                 onWireUpMenuEntryRequested: root.wireUpMenuEntry()
+                onWireUpDisplayTakeoverRequested: root.wireUpDisplayTakeover()
                 onDismissed: root.setupDismissed = true
               }
 

@@ -6,18 +6,8 @@
   "author": "Stephen Schwarz",
   "license": "MIT",
   "description": "Save named monitor layouts and switch between them: a drag-and-drop editor plus a keyboard-driven quick switcher, both as one native Omarchy panel.",
-  "kinds": ["panel", "bar-widget"],
+  "kinds": ["panel"],
   "entryPoints": {
-    "panel": "Panel.qml",
-    "barWidget": "BarWidget.qml"
-  },
-  "barWidget": {
-    "displayName": "Display",
-    "description": "Brightness slider and display controls, with Monitor Profiles instead of the per-display enable/disable list",
-    "category": "System",
-    "allowMultiple": false
-  },
-  "omarchy": {
-    "clonedFrom": "omarchy.monitor"
+    "panel": "Panel.qml"
   }
 }

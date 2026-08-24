@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "dev.shantzware.monitor-profiles-display",
+  "name": "Monitor Profiles (Display)",
+  "version": "1.0.0",
+  "author": "Stephen Schwarz",
+  "license": "MIT",
+  "description": "Takes over Omarchy's first-party Display bar widget (SUPER+CTRL+D): same brightness/text-size/scale controls, with its per-display enable/disable list replaced by Monitor Profiles.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Display",
+    "description": "Brightness slider and display controls, with Monitor Profiles instead of the per-display enable/disable list",
+    "category": "System",
+    "allowMultiple": false
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.monitor"
+  }
+}

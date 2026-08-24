@@ -70,6 +70,16 @@ Panel {
     profileApplyFile.reload()
   }
 
+  // This dropdown only applies already-saved profiles; creating/arranging
+  // ones still needs the full drag-and-drop editor, which lives in the
+  // separate dev.shantzware.monitor-profiles plugin (kind:"panel" -- can't
+  // be this same plugin, see display-takeover/README.md). Close first: two
+  // popups open at once would just fight over screen space and focus.
+  function openEditor() {
+    root.close()
+    Quickshell.execDetached(["omarchy-shell", "shell", "summon", "dev.shantzware.monitor-profiles", "{\"mode\":\"editor\"}"])
+  }
+
   // Carry sub-notch touchpad deltas between wheel events.
   property real wheelAccumulator: 0
 
@@ -136,7 +146,9 @@ Panel {
     // that fires after scaleValues's own binding has evaluated even once,
     // so a bare read here occasionally raced ahead of it to undefined.
     if (section === "scale") return (scaleValues || []).length
-    if (section === "profiles") return (profileNames || []).length
+    // +1: a trailing "Edit Profiles..." row past the real profiles, so it's
+    // reachable by j/k like any other row, not just by mouse.
+    if (section === "profiles") return (profileNames || []).length + 1
     return 0
   }
 
@@ -204,6 +216,10 @@ Panel {
     }
     if (focusSection === "profiles" && selectedIndex >= 0 && selectedIndex < profileNames.length) {
       root.applyProfile(profileNames[selectedIndex])
+      return
+    }
+    if (focusSection === "profiles" && selectedIndex === profileNames.length) {
+      root.openEditor()
     }
     // brightness: no separate action; the slider value is the action.
   }
@@ -928,6 +944,11 @@ Panel {
                 rowIndex: index
               }
             }
+
+            EditLinkRow {
+              width: panelColumn.width
+              rowIndex: root.profileNames.length
+            }
           }
 
           Item {
@@ -1032,6 +1053,65 @@ Panel {
         root.selectedIndex = profileRow.rowIndex
       }
       onClicked: root.applyProfile(profileRow.name)
+    }
+  }
+
+  // Trailing row past the real profiles -- see sectionCount's "profiles"
+  // branch (+1) for how it's still reachable by j/k, not just the mouse.
+  component EditLinkRow: CursorSurface {
+    id: editLinkRow
+    required property int rowIndex
+
+    hasCursor: root.cursorActive && root.focusSection === "profiles" && root.selectedIndex === rowIndex
+    onHasCursorChanged: if (hasCursor) root.ensureCursorVisible(editLinkRow)
+    foreground: root.bar.foreground
+    fill: Style.hoverFillFor(root.bar.foreground, Color.accent)
+    currentFill: Style.selectedFillFor(root.bar.foreground, Color.accent)
+    implicitHeight: editLinkInner.implicitHeight + Style.spacing.xl
+
+    Row {
+      id: editLinkInner
+      anchors.left: parent.left
+      anchors.right: parent.right
+      anchors.verticalCenter: parent.verticalCenter
+      anchors.leftMargin: Style.space(6)
+      anchors.rightMargin: Style.space(6)
+      spacing: Style.space(8)
+
+      Text {
+        textFormat: Text.PlainText
+        text: "󰏫"
+        color: Qt.darker(root.bar.foreground, 1.2)
+        font.family: root.bar.fontFamily
+        font.pixelSize: Style.font.title
+        width: Style.space(22)
+        horizontalAlignment: Text.AlignHCenter
+        anchors.verticalCenter: parent.verticalCenter
+      }
+
+      Text {
+        textFormat: Text.PlainText
+        text: "Edit Profiles…"
+        color: Qt.darker(root.bar.foreground, 1.2)
+        font.family: root.bar.fontFamily
+        font.pixelSize: Style.font.body
+        font.italic: true
+        elide: Text.ElideRight
+        width: parent.width - Style.space(22) - Style.space(8)
+        anchors.verticalCenter: parent.verticalCenter
+      }
+    }
+
+    MouseArea {
+      anchors.fill: parent
+      hoverEnabled: true
+      cursorShape: Qt.PointingHandCursor
+      onContainsMouseChanged: if (containsMouse && !root.reflowingText) {
+        root.cursorActive = true
+        root.focusSection = "profiles"
+        root.selectedIndex = editLinkRow.rowIndex
+      }
+      onClicked: root.openEditor()
     }
   }
 }

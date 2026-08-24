@@ -1,7 +1,7 @@
 import QtQuick
 import qs.Commons
 
-// Two independent first-run checklist items:
+// Three independent first-run checklist items:
 //  - hyprland.lua loading what this plugin writes on Apply/Save. Without
 //    this, Apply/Save still work fine (they're just file writes), but
 //    nothing ever reaches the screen, which reads as the plugin doing
@@ -15,15 +15,20 @@ import qs.Commons
 //    colliding with an existing default the way this plugin's own
 //    suggestion, SUPER+SHIFT+P, collided with one of Omarchy's own —
 //    better left for anyone who wants one to bind by hand.
-// The two don't block each other; only the first gates functionality.
+//  - taking over Omarchy's Display bar widget (SUPER+CTRL+D). Purely
+//    opt-in preference, not a functionality gap — plenty of people are
+//    happy with the stock Display widget.
+// None of the three block each other; only the first gates functionality.
 Item {
   id: root
 
   property bool configReady: false
   property bool menuEntryReady: false
+  property bool displayTakeoverReady: false
 
   signal wireUpConfigRequested()
   signal wireUpMenuEntryRequested()
+  signal wireUpDisplayTakeoverRequested()
   signal dismissed()
 
   Column {
@@ -59,6 +64,16 @@ Item {
       snippet: '"trigger.monitor-profiles": { "action": "omarchy-shell shell summon …" }'
       doneText: "already registered — search “monitors”"
       onAddRequested: root.wireUpMenuEntryRequested()
+    }
+
+    SetupItem {
+      width: parent.width
+      done: root.displayTakeoverReady
+      title: "Take over the Display widget (optional)"
+      body: "Replace Omarchy's Display bar widget (SUPER+CTRL+D) with one that keeps its brightness/text-size/scale controls but swaps its per-display list for Monitor Profiles. Installs as a separate plugin (dev.shantzware.monitor-profiles-display) alongside this one — that's what makes the keybind route correctly."
+      snippet: "omarchy plugin enable dev.shantzware.monitor-profiles-display"
+      doneText: "already taking over Display — try SUPER+CTRL+D"
+      onAddRequested: root.wireUpDisplayTakeoverRequested()
     }
 
     Text {
