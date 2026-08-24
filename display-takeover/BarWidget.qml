@@ -427,6 +427,19 @@ Panel {
   // KeyboardPanel primes focus at open-time, so SUPER-bound IPC summons land
   // with j/k ready to navigate. Keep a default landing point, but don't paint
   // the cursor until hover or the first navigation key.
+  // Pre-selects the active profile's row, falling back to the first one
+  // (e.g. before profileNames/activeProfileName have loaded, or if
+  // whatever was active got renamed/deleted from under it). Guarded by
+  // cursorActive so it only sets the *starting* point -- once the user
+  // has actually pressed a key, profileNames/activeProfileName updating
+  // out from under an in-progress selection (a background refresh, or
+  // this plugin's own apply landing) must not yank the cursor elsewhere.
+  function syncSelectedIndexToActiveProfile() {
+    if (cursorActive) return
+    var idx = profileNames.indexOf(activeProfileName)
+    selectedIndex = idx >= 0 ? idx : 0
+  }
+
   onOpenedChanged: {
     if (opened) {
       refresh()
@@ -435,14 +448,19 @@ Panel {
       // whole point is quick profile switching, so that's what j/k should
       // reach first, not a few sections down.
       focusSection = "profiles"
-      selectedIndex = 0
       cursorActive = false
+      syncSelectedIndexToActiveProfile()
     }
   }
 
+  onActiveProfileNameChanged: syncSelectedIndexToActiveProfile()
+
   onBrightnessAvailableChanged: clampCursor()
   onDisplaysChanged: clampCursor()
-  onProfileNamesChanged: clampCursor()
+  onProfileNamesChanged: {
+    clampCursor()
+    syncSelectedIndexToActiveProfile()
+  }
   onScaleValuesChanged: clampCursor()
   onVisibleSectionsChanged: clampCursor()
 
