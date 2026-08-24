@@ -210,10 +210,18 @@ file doesn't exist yet — doesn't break config parsing.)
 omarchy plugin remove dev.shantzware.monitor-profiles
 ```
 
-This unloads the plugin and removes it from `~/.config/omarchy/plugins/`
-(or, for a symlinked dev checkout, just unlinks it — your clone is
-untouched either way). It does **not** remove, and you may want to clean up
-by hand:
+If you also took over the Display bar widget (above), that's a separate
+plugin id and removing this one doesn't touch it — it'd be left running on
+its own, orphaned but harmless. Remove it too if you want Display back:
+
+```sh
+omarchy plugin remove dev.shantzware.monitor-profiles-display
+```
+
+`omarchy plugin remove` unloads a plugin and removes it from
+`~/.config/omarchy/plugins/` (or, for a symlinked dev checkout, just
+unlinks it — your clone is untouched either way). It does **not** remove,
+and you may want to clean up by hand:
 
 - The `pcall(require, "hypr.hypr_screen")` line in `~/.config/hypr/hyprland.lua`
   (harmless to leave — the `pcall` no-ops once the file it requires is gone
