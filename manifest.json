@@ -12,9 +12,12 @@
     "barWidget": "BarWidget.qml"
   },
   "barWidget": {
-    "displayName": "Monitor Profiles",
-    "description": "Quick-switch between saved monitor layouts",
+    "displayName": "Display",
+    "description": "Brightness slider and display controls, with Monitor Profiles instead of the per-display enable/disable list",
     "category": "System",
     "allowMultiple": false
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.monitor"
   }
 }

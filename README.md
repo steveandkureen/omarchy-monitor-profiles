@@ -59,17 +59,26 @@ Applying a profile writes `~/.config/hypr/hypr_screen.lua` as `hl.monitor(...)`
 calls (the format Hyprland's Lua config actually understands — see
 "Applying a profile", below) and runs `hyprctl reload`.
 
-### Bar icon
+### Bar icon: replaces Display's own
 
-The plugin also adds a bar icon (▦) — a faster, mouse-or-keyboard way to
-switch profiles without opening the full panel, styled after Omarchy's own
-first-party bar widgets (Display/`SUPER+CTRL+D`, Bluetooth): click it, or
-give it keyboard focus and use `j`/`k`/arrows to move, Enter or click to
-apply, `Esc` to close, `Tab` to jump to the next bar widget's dropdown. It
-shows the currently active profile at the top and a checkmark next to it
-in the list. This doesn't replace the full switcher/editor above — it's
-only for switching between profiles you've already saved; creating and
-editing them still happens in the full panel.
+This plugin also takes over Omarchy's first-party Display bar widget
+(`SUPER+CTRL+D`) — same bar icon, same brightness/text-size/scale controls,
+same keybind, but with its "Displays" list (enable/disable a connected
+monitor) replaced by a "Monitor Profiles" list: `j`/`k`/arrows to move,
+Enter or click to apply, a checkmark next to the currently active one.
+`Esc` closes, `Tab` jumps to the next bar widget's dropdown.
+
+This is the same mechanism `omarchy plugin clone` uses (`omarchy.clonedFrom`
+in `manifest.json`) — installing this plugin and enabling its bar-widget
+kind replaces Display's slot in the bar, not adds a second icon next to it.
+Disabling that kind (`omarchy plugin disable dev.shantzware.monitor-profiles`
+— the whole plugin, since both kinds share one id) restores the original
+Display widget.
+
+This doesn't replace the full switcher/editor above — it's only for
+switching between profiles you've already saved; creating and editing them
+still happens in the full panel (menu, keybind, or `Tab` there between
+Switch/Edit).
 
 ## Keyboard-only editing
 
