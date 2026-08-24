@@ -59,6 +59,37 @@ Applying a profile writes `~/.config/hypr/hypr_screen.lua` as `hl.monitor(...)`
 calls (the format Hyprland's Lua config actually understands — see
 "Applying a profile", below) and runs `hyprctl reload`.
 
+### Optional: take over the Display bar widget
+
+A second, separate plugin — `dev.shantzware.monitor-profiles-display`,
+bundled in this same repo under `display-takeover/` — can take over
+Omarchy's first-party Display bar widget (`SUPER+CTRL+D`) entirely: same
+bar icon, same brightness/text-size/scale controls, same keybind, but with
+its "Displays" list (enable/disable a connected monitor) replaced by a
+"Monitor Profiles" list. `j`/`k`/arrows to move, Enter or click to apply, a
+checkmark next to the currently active one, and a trailing "Edit
+Profiles…" row that opens this plugin's full editor. `Esc` closes, `Tab`
+jumps to the next bar widget's dropdown.
+
+It's a genuinely separate plugin id (not a second kind on this one) on
+purpose — Omarchy's shell routes every toggle/summon/hide for a plugin
+that's *also* `kind:"panel"` to the panel, never a bar widget, so
+`SUPER+CTRL+D` would keep opening the full editor instead of the dropdown
+if it lived on this plugin's own id. See
+[`display-takeover/README.md`](display-takeover/README.md) for the full
+explanation.
+
+Opt-in, not automatic: the setup banner's third item ("Take over the
+Display widget (optional)") does it for you in one click — copies
+`display-takeover/` into its own installed plugin directory and enables
+it, the same way `omarchy plugin clone` copies a built-in plugin into an
+editable one. It uses `omarchy.clonedFrom` in its manifest, the same field
+`omarchy plugin clone` itself writes, to replace Display's exact slot in
+the bar rather than adding a second icon next to it.
+`omarchy plugin disable dev.shantzware.monitor-profiles-display` restores
+the original Display widget; this plugin's own full editor is unaffected
+either way, since it's a separate id.
+
 ## Keyboard-only editing
 
 Everything in the editor works without a mouse, in three vim-style modes
@@ -195,8 +226,10 @@ by hand:
 
 ```sh
 omarchy plugin validate .                                  # manifest schema
-qmllint -I "$OMARCHY_PATH/shell" *.qml                      # syntax
-node test/model-security.test.js                            # profile-name/Lua-injection safety
+omarchy plugin validate display-takeover                   # ditto, for the second plugin
+qmllint -I "$OMARCHY_PATH/shell" *.qml display-takeover/*.qml   # syntax
+node test/model-security.test.js                           # profile-name/Lua-injection safety
+node test/model-copy-sync.test.js                           # display-takeover/Model.js hasn't drifted
 omarchy-shell shell summon dev.shantzware.monitor-profiles '{"mode":"editor"}'
 omarchy-shell shell hide dev.shantzware.monitor-profiles
 ```
@@ -207,14 +240,16 @@ reload with `omarchy-restart-shell`.
 
 ## Files
 
-- `manifest.json` — plugin manifest (`kind: panel`, standalone/keybind-summoned)
-- `Panel.qml` — entry point: layer-shell overlay, mode switch, dismiss
-- `SwitcherView.qml` — the quick-switch list
+- `manifest.json` — plugin manifest (`kind: panel`)
+- `Panel.qml` — the full switcher/editor entry point: layer-shell overlay, mode switch, dismiss, and the setup banner's wire-up logic (including installing `display-takeover/`, below)
+- `SwitcherView.qml` — the quick-switch list (inside Panel.qml)
 - `EditorView.qml` — the visual editor (sidebar + canvas + inspector)
 - `MonitorRect.qml`, `InspectorField.qml`, `ActionButton.qml`, `ModeTab.qml` — small shared components
-- `SetupBanner.qml` — first-run "hyprland.lua isn't wired up yet" prompt
+- `SetupBanner.qml`, `SetupItem.qml` — first-run checklist (config wiring, Omarchy menu entry, optional Display takeover)
 - `Model.js` — profile parsing/serialization, Lua translation, live-monitor mapping
+- `display-takeover/` — a second, separate plugin (`kind: bar-widget`) that takes over Omarchy's Display bar widget; see "Optional: take over the Display bar widget" above and [`display-takeover/README.md`](display-takeover/README.md)
 - `test/model-security.test.js` — adversarial tests for profile-name path traversal and Lua-injection escaping (`node test/model-security.test.js`)
+- `test/model-copy-sync.test.js` — fails if `display-takeover/Model.js` drifts from `Model.js` (`node test/model-copy-sync.test.js`)
 
 ## License
 
